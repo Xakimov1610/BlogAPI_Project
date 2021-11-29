@@ -2,24 +2,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Api.Entity;
 
 namespace Api.Entity
 {
     public class Post
     {
-        [Key,DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; }
 
-        [MaxLength(255)]
-        public Guid HeaderImageUrl { get; set; }
+        public Guid HeaderImageId { get; set; }
 
         [Required]
         [MaxLength(255)]
-        public string Title { get; set; } 
-        
+        public string Title { get; set; }
+
         [MaxLength(255)]
         public string Description { get; set; }
 
+        [MaxLength(1024)]
         public string Content { get; set; }
 
         public uint Viewed { get; set; }
@@ -32,8 +33,22 @@ namespace Api.Entity
 
         public ICollection<Media> Medias { get; set; }
 
+        [Obsolete("Used only for Entities binding.", true)]
+        public Post() { }
 
-
+        public Post(Guid headerImageId, string title, string description, string content, uint viewed, DateTimeOffset createdAt, DateTimeOffset modifiedAt, ICollection<Comment> comments, ICollection<Media> medias)
+        {
+            Id = Guid.NewGuid();
+            HeaderImageId = headerImageId;
+            Title = title;
+            Description = description;
+            Content = content;
+            Viewed = viewed;
+            CreatedAt = createdAt;
+            ModifiedAt = modifiedAt;
+            Comments = comments;
+            Medias = medias;
+        }
 
     }
 }

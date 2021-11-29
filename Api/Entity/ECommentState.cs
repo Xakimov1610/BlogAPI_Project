@@ -1,7 +1,7 @@
 using System;
 namespace Api.Entity
 {
-    public enum EState
+    public enum ECommentState
     {
         Pending,
 
