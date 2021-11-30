@@ -11,9 +11,7 @@ namespace Api.Data
 
         public DbSet<Media> Medias { get; set; }
 
-
-
-        public BlogContext(DbContextOptions options)
+        public BlogContext(DbContextOptions<BlogContext> options)
             : base(options) { }
     }
 }

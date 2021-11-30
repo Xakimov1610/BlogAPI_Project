@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Api.Data;
+using Api.Service;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -30,6 +31,10 @@ namespace Api
         {
             services.AddDbContext<BlogContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("BlogConnection")));
+
+            services.AddTransient<IPostService, PostService>();
+            services.AddTransient<ICommentService, CommentService>();
+            services.AddTransient<IMediaService, MediaService>();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

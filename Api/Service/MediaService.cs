@@ -7,7 +7,7 @@ using Api.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Api.Services
+namespace Api.Service
 {
     public class MediaService : IMediaService
     {

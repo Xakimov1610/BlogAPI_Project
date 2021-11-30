@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Api.Entity;
 using Api.Models;
-using Api.Services;
+using Api.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers

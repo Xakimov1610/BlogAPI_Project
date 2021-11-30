@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Api.Entity;
 
-namespace Api.Services
+namespace Api.Service
 {
     public interface IMediaService
     {

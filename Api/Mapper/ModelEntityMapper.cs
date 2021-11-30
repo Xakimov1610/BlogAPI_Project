@@ -2,7 +2,7 @@ using System.IO;
 using Api.Entity;
 using Microsoft.AspNetCore.Http;
 
-namespace blog.Mapper
+namespace Api.Mapper
 {
     public static class ModelEntityMappers
 {
