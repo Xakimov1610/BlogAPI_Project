@@ -6,8 +6,9 @@ using Api.Mapper;
 using Api.Models;
 using Api.Service;
 using System;
+using Api.Data;
 
-namespace api.Controller
+namespace Api.Controller
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -20,37 +21,44 @@ namespace api.Controller
         private readonly ICommentService _cs;
 
         private readonly IMediaService _mc;
+        private readonly BlogContext _ctx;
 
         public PostController(
             ILogger<PostController> log,
             IPostService pc,
             ICommentService cs,
-            IMediaService mc
+            IMediaService mc,
+            BlogContext ctx
         )
         {
             _log = log;
             _pc = pc;
             _cs = cs;
             _mc = mc;
+            _ctx = ctx;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PostAsync(Newode post)
+        [HttpPost] 
+        [ActionName(nameof(PostAsync))]
+
+        public async Task<IActionResult> PostAsync(PostModel post)
         {
-            var media = post.HeaderImageId.Select(id => _mc.GetAsync(id).Result);
+            var media = post.Medias.Select(id => _mc.GetAsync(id).Result);
             var result = await _pc.CreateAsync(post.ToPostEntity(media));
 
-            if (result.IsSuccess)
+
+           if(result.IsSuccess)
             {
-                _log.LogInformation($"Post create in DB: {media}");
-                return Ok();
+              _log.LogInformation($"Post create in DB: {post.ToPostEntity(media).Id}");
+            return CreatedAtAction(nameof(PostAsync), new {id = post.ToPostEntity(media).Id }, post.ToPostEntity(media));
             }
 
             return BadRequest(result.Exception.Message);
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> GetMedia()
+        public async Task<IActionResult> GetPost()
         {
 
             var images = await _pc.GetAllAsync();
@@ -60,7 +68,6 @@ namespace api.Controller
                 {
                     return new {
                         Id = i.Id,
-                        HeaderImageId=i.HeaderImageId,
                         Title = i.Title,
                         Description=i.Description,
                         Content=i.Content,
@@ -76,39 +83,50 @@ namespace api.Controller
 
         [HttpGet]
         [Route("{Id}")]
-        public async Task<IActionResult> GetPostAsync([FromRoute]Guid Id)
+        public async Task<IActionResult> GetIdMedia(Guid Id)
         {
-            var post = await _pc.GetAsync(Id);
-               
-
-            if(post is default(Api.Entity.Post))
-            {
-                return NotFound($"User with ID {Id} not found");
-            }
-
-            return Ok(post);
-              
+      
+           if(!await _pc.ExistsAsync(Id))
+        {
+            return NotFound();
         }
 
-       [HttpPut]
-       [Route("{id}")]
-       public async Task<ActionResult> UpdateAsync([FromRoute]Guid id, [FromBody]NewPost post) 
-       {
+            var images = await _pc.GetIdAsync(Id);
 
-            var media = post.HeaderImageId.Select(id => _mc.GetAsync(id).Result);
-            var topostEntity = post.ToPostEntity(media);
-            var result = await _pc.UpdatePostAsync(topostEntity);
-            
-             if (result.IsSuccess)
+            return Ok(images
+                .Select(i =>
+                {
+                    return new {
+                        Id = i.Id,
+                        Title = i.Title,
+                        Description=i.Description,
+                        Content=i.Content,
+                        Viewed=i.Viewed,
+                        CreatedAt=i.CreatedAt,
+                        ModifiedAt=i.ModifiedAt,
+                        Comments=i.Comments
+
+                    };
+              }));
+        }
+
+        [HttpPut]
+        [Route("{Id}")]
+        public async Task<IActionResult> PostUpdate([FromRoute] Guid Id, PostUpdated updated)
+        {
+            var media = updated.Medias.Select(id => _mc.GetAsync(id).Result);
+            var toEntity = updated.ToUpdatePostEntity(media);
+            var result = await _pc.UpdatePostAsync(toEntity);
+           
+            if(result.IsSuccess)
             {
-                _log.LogInformation($"Post update in DB: {media}");
-                return Ok();
+                return Ok(result);
             }
 
             return BadRequest(result.Exception.Message);
-       }
+        }
 
-
+   
         [HttpDelete]
         [Route("{Id}")]
         public async Task<IActionResult> Delete([FromRoute]Guid Id)
@@ -116,8 +134,24 @@ namespace api.Controller
 
             var post =  await _pc.DeleteAsync(Id);
               
-            return Ok(post);
+            if (post.IsSuccess)
+            {
+                return Ok(post);
+            }
+
+            return BadRequest(post.Exception.Message);
             
         }
+
+
+        private bool _updatedValid(PostUpdated updated)
+        {
+            return !(updated.Title == null &&
+                    updated.Description == null &&
+                    updated.Content == null);
+                   
+        }
+
     }
 }
+

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Api.Data;
 using Api.Entity;
@@ -25,7 +26,7 @@ namespace Api.Service
             await _ctx.Posts.AddAsync(post);
             await _ctx.SaveChangesAsync();
 
-            _log.LogInformation($"Post create in DB: {post.Id}");
+            _log.LogInformation($"Post create in DB: {post}");
 
             return (true, null, post);
         }
@@ -37,17 +38,20 @@ namespace Api.Service
 
         }
 
-        public async Task<(bool IsSuccess, Exception Exception)> DeleteAsync(Guid id)
+        public async Task<(bool IsSuccess, Exception Exception)> DeleteAsync(Guid Id)
         {
-              if(!await ExistsAsync(id))
+              if(!await ExistsAsync(Id))
             {
-                _log.LogInformation($"delete post to DB failed: {id}");
+                _log.LogInformation($"delete post to DB failed: {Id}");
 
-                return(false, new ArgumentException($"There is no Post with given Id: {id}"));
+                return(false, new ArgumentException($"There is no Post with given Id: {Id}"));
             }
-            _ctx.Posts.Remove(await GetAsync(id));
+            // var post = _ctx.Posts.Where(p => p.Id == Id).Include(m => m.Medias).First();
+            //     var medias = _ctx.Posts.FirstOrDefault(p => p.Id == Id).Medias.ToList();
+            //     var comments = _ctx.Posts.FirstOrDefault(p => p.Id == Id).Comments.ToList();
+            _ctx.Posts.Remove(await GetAsync(Id));
             await _ctx.SaveChangesAsync();
-            _log.LogInformation($"Post remove in DB: {id}");
+            _log.LogInformation($"Post remove in DB: {Id}");
            
             return (true, null);
         }
@@ -62,28 +66,37 @@ namespace Api.Service
             .Include(m => m.Comments)
             .Include(m => m.Medias)
             .ToListAsync();
+         public Task<List<Post>> GetIdAsync(Guid id)
+        => _ctx.Posts
+            .AsNoTracking()
+            .Where(i => i.Id == id)
+             .Include(m => m.Comments)
+            .Include(m => m.Medias)
+            .ToListAsync();
         public Task <Post> GetAsync(Guid id)
         => _ctx.Posts.FirstOrDefaultAsync(a => a.Id == id);
         
 
-        public async Task<(bool IsSuccess, Exception Exception, Post Post)> UpdatePostAsync(Post post)
+        public async Task<(bool IsSuccess, Exception Exception,Post Post)> UpdatePostAsync(Post post)
         {
-                if(!await ExistsAsync(post.Id))
-          {
-            _log.LogInformation($"delete post to DB failed: {post.Id}");  
-           
-            return (false, new ArgumentException($"There is no Post with given ID: {post.Id}"), null);
-          }
+            try
+            {
+                if(await _ctx.Posts.AnyAsync(t => t.Id == post.Id))
+                {
+                    _ctx.Posts.Update(post);
+                    await _ctx.SaveChangesAsync();
 
-            await _ctx.Posts.AnyAsync( t => t.Id == post.Id);
-
-            post.ModifiedAt = DateTimeOffset.UtcNow;
-
-            _ctx.Posts.Update(post);
-            await _ctx.SaveChangesAsync(); 
-            _log.LogInformation($"Post update : {post.Id}");
-            
-            return(true, null, post);   
+                    return (true, null,post);
+                }
+                else
+                {
+                    return (false, new Exception($"Post with given ID: {post.Id} doesnt exist!"),null);
+                }
+            }
+            catch(Exception e)
+            {
+                return (false, e,null);
+            }
         }
     }
 }

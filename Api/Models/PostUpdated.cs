@@ -1,37 +1,25 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Api.Entity;
 
-
-namespace Api.Entity
+namespace Api.Models
 {
-    public class Post
+    public class PostUpdated
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid Id { get; set; }
-
         public Guid HeaderImageId { get; set; }
 
-        [Required]
         [MaxLength(255)]
+        [Required]
         public string Title { get; set; }
 
         [MaxLength(255)]
         public string Description { get; set; }
-
-        [MaxLength(1024)]
         public string Content { get; set; }
-
         public uint Viewed { get; set; }
-
         public DateTimeOffset CreatedAt { get; set; }
-
         public DateTimeOffset ModifiedAt { get; set; }
-
-        public ICollection<Comment> Comments { get; set; }
-
-        public ICollection<Media> Medias { get; set; }
-
+        public IEnumerable<Guid> Medias { get; set; }
     }
 }

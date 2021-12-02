@@ -9,6 +9,8 @@ namespace Api.Service
     {
     Task<(bool IsSuccess, Exception Exception, Post Post)> CreateAsync(Post post);
     Task<List<Post>> GetAllAsync();
+
+    Task<List<Post>> GetIdAsync(Guid id);
     Task<Post> GetAsync(Guid id);
     Task<(bool IsSuccess, Exception Exception, Post Post)> UpdatePostAsync(Post post);
     Task<bool> ExistsAsync(Guid id);

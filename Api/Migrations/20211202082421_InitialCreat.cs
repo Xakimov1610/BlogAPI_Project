@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Api.Migrations
 {
-    public partial class InintialCreate : Migration
+    public partial class InitialCreat : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -51,8 +51,8 @@ namespace Api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ContentType = table.Column<string>(type: "nvarchar(55)", maxLength: 55, nullable: true),
-                    Data = table.Column<byte[]>(type: "varbinary(max)", maxLength: 3145728, nullable: true),
+                    ContentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Data = table.Column<byte[]>(type: "varbinary(max)", maxLength: 3145728, nullable: false),
                     PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>

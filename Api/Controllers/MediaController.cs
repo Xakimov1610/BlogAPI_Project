@@ -2,10 +2,11 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Api.Entity;
 using Api.Models;
 using Api.Service;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Api.Controllers
 {
@@ -13,52 +14,94 @@ namespace Api.Controllers
     [Route("api/[controller]")]
     public class MediaController : ControllerBase
     {
-        private readonly IMediaService _mediaService;
+        private readonly ILogger<MediaController> _log;
+        private readonly IMediaService _ser;
 
-        public MediaController(IMediaService mediaService)
+        public MediaController(ILogger<MediaController> log,IMediaService service)
         {
-            _mediaService = mediaService;
+          _log = log;
+          _ser = service;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PostAsync([FromForm] MediaModel media)
+    [HttpPost]
+    public async Task<IActionResult> PostMediaAsync([FromForm]MediaModel media)
+    {
+        var files = media.Data.Select(GetImageEntity).ToList();
+       
+        var result = await _ser.CreateMediaAsync(files);
+       
+         if(result.IsSuccess)
         {
-            var images = media.Data.Select(f =>
+           _log.LogInformation($"Media create in DB: {media}");
+             return Ok(files.Select(i =>
+        {
+            return new 
             {
-                using var stream = new MemoryStream();
-                f.CopyTo(stream);
-                return new Media(contentType: f.ContentType, data: stream.ToArray());
-            }).ToList();
-
-            var result = await _mediaService.InsertAsync(images);
-            if (result.IsSuccess)
-            {
-                return Ok();
-            }
-            return BadRequest();
+                Id = i.Id,
+                ContentType = i.ContentType,
+                Size = i.Data.Length,
+            };
+        }));
         }
-        [HttpGet]
-        public async Task<IActionResult> GetAsync()
-            => Ok(await _mediaService.GetAllAsync());
+        return BadRequest(result.Exception.Message);
+    }
 
-        [HttpGet]
-        [Route("{id}")]
-        public async Task<IActionResult> GetAsync(Guid id)
+    [HttpGet]
+    public async Task<IActionResult> GetMedia()
+    {
+      var images = await _ser.GetAllAsync();
+
+        return Ok(images.Select(i =>
         {
-            var file = await _mediaService.GetAsync(id);
-            var stream = new MemoryStream(file.Data);
-            return File(stream, file.ContentType);
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteAsync(Guid id)
-        {
-            var result = await _mediaService.DeleteAsync(id);
-            if (result.IsSuccess)
+            return new 
             {
-                return Ok();
-            }
-            return BadRequest();
+                ContentType = i.ContentType,
+                Size = i.Data.Length,
+                Id = i.Id
+            };
+        }));
+    }
+
+    [HttpGet]
+    [Route("/media/{id}")]
+    public async Task<IActionResult> GetMedia(Guid id)
+    {
+        var file = await _ser.GetAsync(id);
+
+        var stream = new MemoryStream(file.Data);
+
+        return File(stream, file.ContentType);
+    }
+
+     [HttpDelete]
+     [Route("{Id}")]
+     public async Task<IActionResult> Delete([FromRoute]Guid Id)
+    {
+
+         var media =  await _ser.DeleteAsync(Id);
+              
+         if(media.IsSuccess)
+        {
+           _log.LogInformation($"Media delete in DB: {media}");
+            return Ok();
         }
+        return BadRequest(media.Exception.Message);
+            
+    }
+
+      private Api.Entity.Media GetImageEntity(IFormFile file)
+    {
+        using var stream = new MemoryStream();
+
+        file.CopyTo(stream);
+
+        return new Api.Entity.Media()
+        {
+            Id = Guid.NewGuid(),
+            ContentType = file.ContentType,
+            Data = stream.ToArray()
+        };
+    }
+
     }
 }

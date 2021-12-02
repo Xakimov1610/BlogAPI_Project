@@ -63,22 +63,26 @@ namespace Api.Service
         public Task<Comment> GetAsync(Guid id)
         => _ctx.Comments.FirstOrDefaultAsync(a => a.Id == id);
 
-        public async Task<(bool IsSuccess, Exception Exception, Comment Comment)> UpdateCommentAsync(Comment comment)
+         public async Task<(bool IsSuccess, Exception Exception,Comment Comment)> UpdateCommentAsync(Comment comment)
         {
-             if(!await ExistsAsync(comment.Id))
-          {
-            _log.LogInformation($"update comment to DB failed: {comment.Id}");  
-           
-            return (false, new ArgumentException($"There is no Comment with given ID: {comment.Id}"), null);
-          }
+            try
+            {
+                if(await _ctx.Comments.AnyAsync(t => t.Id == comment.Id))
+                {
+                    _ctx.Comments.Update(comment);
+                    await _ctx.SaveChangesAsync();
 
-            await _ctx.Posts.AnyAsync( t => t.Id == comment.Id);
-
-            _ctx.Comments.Update(comment);
-            await _ctx.SaveChangesAsync(); 
-            _log.LogInformation($"Comennt update : {comment.Id}");
-            
-            return(true, null, comment);   
+                    return (true, null,comment);
+                }
+                else
+                {
+                    return (false, new Exception($"Post with given ID: {comment.Id} doesnt exist!"),null);
+                }
+            }
+            catch(Exception e)
+            {
+                return (false, e,null);
+            }
         }
         
     }

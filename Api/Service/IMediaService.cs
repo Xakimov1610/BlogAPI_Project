@@ -7,10 +7,10 @@ namespace Api.Service
 {
     public interface IMediaService
     {
-        Task<bool> ExistsAsync(Guid id);
+        Task<(bool IsSuccess, Exception Exception,List<Media> Media)> CreateMediaAsync(List<Media> media);
         Task<Media> GetAsync(Guid id);
         Task<List<Media>> GetAllAsync();
-        Task<(bool IsSuccess, Exception Exception)> InsertAsync(List<Media> media);
+        Task<bool> ExistsAsync(Guid id);
         Task<(bool IsSuccess, Exception Exception)> DeleteAsync(Guid id);
     }
 }

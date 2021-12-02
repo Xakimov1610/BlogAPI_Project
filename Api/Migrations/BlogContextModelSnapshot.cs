@@ -51,10 +51,12 @@ namespace Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ContentType")
-                        .HasMaxLength(55)
-                        .HasColumnType("nvarchar(55)");
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<byte[]>("Data")
+                        .IsRequired()
                         .HasMaxLength(3145728)
                         .HasColumnType("varbinary(max)");
 

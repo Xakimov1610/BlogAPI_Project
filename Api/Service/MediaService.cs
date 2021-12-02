@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Api.Data;
 using Api.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -11,61 +11,53 @@ namespace Api.Service
 {
     public class MediaService : IMediaService
     {
-        private readonly BlogContext _context;
-        private readonly ILogger<MediaService> _logger;
+        private readonly BlogContext _ctx;
+        private readonly ILogger<MediaService> _log;
 
-        public MediaService(BlogContext context, ILogger<MediaService> logger)
+        public MediaService(ILogger<MediaService> logger, BlogContext context)
         {
-            _context = context;
-            _logger = logger;
+            _ctx = context;
+            _log = logger;
+        }
+        public async Task<(bool IsSuccess, Exception Exception,List<Media> Media)> CreateMediaAsync(List<Media> media)
+        {
+        try
+        {
+            await _ctx.Medias.AddRangeAsync(media);
+            await _ctx.SaveChangesAsync();
+              _log.LogInformation($"Media create in DB: {media}");
+            return (true, null,media);
+        }
+        catch(Exception e)
+        {
+           _log.LogInformation($"Media post to DB failed: {e.Message}", e);
+            return (false, e,null);
+        }
         }
 
-        public async Task<(bool IsSuccess, Exception Exception)> DeleteAsync(Guid id)
-        {
-            var media = await GetAsync(id);
-            if (media is default(Media))
-            {
-                return (false, new Exception("Not found."));
-            }
-            try
-            {
-                _context.Medias.Remove(media);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"Medias deleted in DB.");
-                return (true, null);
-            }
-            catch (Exception e)
-            {
-                _logger.LogInformation($"Deleting medias in DB failed.\nError:{e.Message}", e);
-                return (false, e);
-            }
-        }
+        public async Task<Media> GetAsync(Guid id)
+         => await _ctx.Medias.FirstOrDefaultAsync(i => i.Id == id);
+        public Task<List<Media>> GetAllAsync()
+        => _ctx.Medias
+            .AsNoTracking()
+            .ToListAsync();
 
         public Task<bool> ExistsAsync(Guid id)
-            => _context.Medias.AnyAsync(m => m.Id == id);
+         => _ctx.Medias.AnyAsync(i => i.Id == id);
 
-        public Task<List<Media>> GetAllAsync()
-            => _context.Medias.ToListAsync();
-
-        public Task<Media> GetAsync(Guid id)
-            => _context.Medias.FirstOrDefaultAsync(m => m.Id == id);
-
-        public async Task<(bool IsSuccess, Exception Exception)> InsertAsync(List<Media> media)
+          public async Task<(bool IsSuccess, Exception Exception)> DeleteAsync(Guid id)
         {
-            try
+              if(!await ExistsAsync(id))
             {
-                await _context.Medias.AddRangeAsync(media);
-                await _context.SaveChangesAsync();
+                _log.LogInformation($"delete media to DB failed: {id}");
 
-                _logger.LogInformation($"Medias created in DB.");
-                return (true, null);
+                return(false, new ArgumentException($"There is no Media with given Id: {id}"));
             }
-            catch (Exception e)
-            {
-                _logger.LogInformation($"Creating medias in DB failed.\nError:{e.Message}, e");
-                return (false, e);
-            }
+            _ctx.Medias.Remove(await GetAsync(id));
+            await _ctx.SaveChangesAsync();
+            _log.LogInformation($"Media remove in DB: {id}");
+           
+            return (true, null);
         }
     }
 }

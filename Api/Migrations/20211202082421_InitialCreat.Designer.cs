@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Api.Migrations
 {
     [DbContext(typeof(BlogContext))]
-    [Migration("20211129203827_InintialCreate")]
-    partial class InintialCreate
+    [Migration("20211202082421_InitialCreat")]
+    partial class InitialCreat
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -53,10 +53,12 @@ namespace Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ContentType")
-                        .HasMaxLength(55)
-                        .HasColumnType("nvarchar(55)");
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<byte[]>("Data")
+                        .IsRequired()
                         .HasMaxLength(3145728)
                         .HasColumnType("varbinary(max)");
 

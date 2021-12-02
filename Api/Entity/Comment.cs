@@ -19,18 +19,5 @@ namespace Api.Entity
 
         public Guid PostId { get; set; }
 
-        [Obsolete("Used only for Entities binding.", true)]
-        public Comment() { }
-
-        public Comment(string author, string content, ECommentState state, Guid postId)
-        {
-            Id = Guid.NewGuid();
-            Author = author;
-            Content = content;
-            State = state;
-            PostId = postId;
-        }
-
-
     }
 }
